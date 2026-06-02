@@ -284,7 +284,7 @@ export function RevenueChart({ data }: { data: any[] }) {
             ))}
           </defs>
           <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text3)' }} tickLine={false} axisLine={false} interval={4} />
-          <YAxis tick={{ fontSize: 9, fill: 'var(--text3)' }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}K`} />
+          <YAxis tick={{ fontSize: 9, fill: 'var(--text3)' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `$${v}K`} />
           <Tooltip
             contentStyle={{ background: 'var(--surface2)', border: '1px solid var(--border2)',
               borderRadius: 8, fontSize: 11 }}
