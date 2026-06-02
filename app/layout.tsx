@@ -1,24 +1,4 @@
 import type { Metadata } from 'next'
-import { Syne, DM_Mono, Instrument_Sans } from 'next/font/google'
-import './globals.css'
-
-const syne = Syne({
-  subsets: ['latin'],
-  variable: '--font-syne',
-  weight: ['400','600','700','800'],
-})
-
-const dmMono = DM_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  weight: ['300','400','500'],
-})
-
-const instrumentSans = Instrument_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400','500','600'],
-})
 
 export const metadata: Metadata = {
   title: 'FranchiseIQ — Intelligent Operations Platform',
@@ -27,8 +7,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmMono.variable} ${instrumentSans.variable}`}>
-      <body className="font-sans bg-bg text-white antialiased">
+    <html lang="en">
+      <body style={{ margin: 0, padding: 0, background: '#080c14' }}>
         {children}
       </body>
     </html>
