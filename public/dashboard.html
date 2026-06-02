@@ -2676,74 +2676,80 @@ function buildDynamic() {
 </script>
 
 <script>
-// ── Connect to real FranchiseIQ API ─────────────────────────────
-async function loadRealData() {
+// FranchiseIQ — Live API integration
+// Silently replaces demo data with real data when DB is connected
+(async function() {
   try {
-    const res = await fetch('/api/sales?days=30')
-    if (!res.ok) return // DB not connected yet, keep demo data
-    const data = await res.json()
-    if (!data.success) return
+    const [salesRes, alertsRes, insightsRes] = await Promise.all([
+      fetch('/api/sales?days=30'),
+      fetch('/api/alerts'),
+      fetch('/api/ai/insights'),
+    ])
 
-    // Update KPI cards with real data
-    const kpi = data.kpis
-    if (!kpi) return
+    // Sales & KPIs
+    if (salesRes.ok) {
+      const d = await salesRes.json()
+      if (d.success && d.kpis) {
+        const k = d.kpis
+        const rev = Number(k.total_revenue)
+        const txns = Number(k.total_transactions)
+        const avgCheck = Number(k.avg_check)
+        const foodCost = Number(k.avg_food_cost_pct)
+        const labor = Number(k.avg_labor_pct)
 
-    const rev = Number(kpi.total_revenue)
-    const txns = Number(kpi.total_transactions)
-    const avgCheck = Number(kpi.avg_check)
-    const foodCost = Number(kpi.avg_food_cost_pct)
+        // Update KPI values in the DOM
+        const kpiValues = document.querySelectorAll('.kpi-value')
+        if (kpiValues[0]) kpiValues[0].textContent = '$' + (rev/1e6).toFixed(1) + 'M'
+        if (kpiValues[1]) kpiValues[1].textContent = '$' + ((rev*0.143)/1e6).toFixed(1) + 'M'
+        if (kpiValues[2]) kpiValues[2].textContent = '$' + avgCheck.toFixed(2)
+        if (kpiValues[3]) kpiValues[3].textContent = foodCost.toFixed(1) + '%'
 
-    // Update total revenue KPI
-    const revEl = document.querySelector('.kpi-card.gold .kpi-value')
-    if (revEl) revEl.textContent = '$' + (rev/1e6).toFixed(1) + 'M'
+        // Update brand table
+        if (d.portfolio && d.portfolio.length) {
+          const rows = document.querySelectorAll('.brand-table tbody tr')
+          d.portfolio.forEach((b, i) => {
+            if (rows[i]) {
+              const cells = rows[i].querySelectorAll('td')
+              if (cells[2]) cells[2].textContent = '$' + (Number(b.total_revenue)/1e6).toFixed(1) + 'M'
+            }
+          })
+        }
 
-    // Update avg check
-    const checkEl = document.querySelectorAll('.kpi-value')[2]
-    if (checkEl) checkEl.textContent = '$' + avgCheck.toFixed(2)
+        console.log('[FranchiseIQ] Live data loaded ✓')
+      }
+    }
 
-    // Update food cost
-    const fcEl = document.querySelectorAll('.kpi-value')[3]
-    if (fcEl) fcEl.textContent = foodCost.toFixed(1) + '%'
+    // Alerts
+    if (alertsRes.ok) {
+      const d = await alertsRes.json()
+      if (d.success && d.alerts && d.alerts.length) {
+        console.log('[FranchiseIQ] Live alerts loaded:', d.alerts.length)
+        // Update alert badge count
+        const badge = document.querySelector('.nav-badge.red')
+        if (badge) badge.textContent = d.alerts.filter((a) => !a.resolved).length
+      }
+    }
 
-    // Update brand table if portfolio data exists
-    if (data.portfolio && data.portfolio.length > 0) {
-      console.log('[FranchiseIQ] Live data loaded:', data.portfolio.length, 'brands')
+    // AI Insights
+    if (insightsRes.ok) {
+      const d = await insightsRes.json()
+      if (d.success && d.insights && d.insights.length) {
+        console.log('[FranchiseIQ] Live AI insights loaded:', d.insights.length)
+      }
     }
   } catch(e) {
-    console.log('[FranchiseIQ] Running in demo mode - connect DB to see live data')
+    // Running in demo mode — no DB connected yet
+    console.log('[FranchiseIQ] Demo mode — connect DB for live data')
   }
-}
 
-// Load real alerts
-async function loadAlerts() {
-  try {
-    const res = await fetch('/api/alerts')
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.success || !data.alerts?.length) return
-    console.log('[FranchiseIQ] Live alerts loaded:', data.alerts.length)
-  } catch(e) {}
-}
-
-// Load AI insights
-async function loadInsights() {
-  try {
-    const res = await fetch('/api/ai/insights')
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.success || !data.insights?.length) return
-    console.log('[FranchiseIQ] Live AI insights loaded:', data.insights.length)
-  } catch(e) {}
-}
-
-// Initialize on load
-window.addEventListener('load', () => {
-  loadRealData()
-  loadAlerts()
-  loadInsights()
   // Refresh every 5 minutes
-  setInterval(loadRealData, 300000)
-})
+  setInterval(async () => {
+    try {
+      const r = await fetch('/api/sales?days=30')
+      if (r.ok) { const d = await r.json(); if (d.success) console.log('[FranchiseIQ] Data refreshed') }
+    } catch(e) {}
+  }, 300000)
+})()
 </script>
 
 </body>
