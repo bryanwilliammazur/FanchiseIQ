@@ -11,3 +11,6 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+
+// maxDuration is set per-route via export const maxDuration = N
+// in each route file — already done in cron, sync, and ai/chat routes
